@@ -8,6 +8,11 @@ branding:
 
 inputs:
 
+  repository:
+    description: Repository to checkout, i.e. the `repository` input of `actions/checkout`.
+    default: ${{ github.repository }}
+    required: false
+
   checkout-ref:
     description: |
       Reference to checkout, i.e. the `ref` input of `actions/checkout`.
@@ -37,6 +42,24 @@ inputs:
     default: ""
     required: false
 
+  test-requirements-path:
+    description: |
+      Path to the test requirements file.
+    default: tests/requirements.txt
+    required: false
+
+  max-retries:
+    description: |
+      Maximum number of retries.
+    default: 15
+    required: false
+
+  retry-delay:
+    description: |
+      Delay between retries in seconds.
+    default: 60
+    required: false
+
 
 runs:
   using: "composite"
@@ -49,54 +72,59 @@ runs:
         printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n\n\n"
         echo -e "\033[1;30;48;2;0;162;255m 1. Initialize  "
 
-    - name: 'Set up Python'
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{inputs.python-version}}
-
     - if: ${{ inputs.package-source == 'local' }}
       uses: actions/checkout@v3
       with:
+        repository: ${{ inputs.repository }}
         ref: ${{ inputs.checkout-ref }}
         fetch-depth: 0
     - if: ${{ inputs.package-source != 'local' }}
       uses: actions/checkout@v3
       with:
+        repository: ${{ inputs.repository }}
         ref: ${{ inputs.checkout-ref }}
         sparse-checkout: |
           tests
           requirements.txt
           pyproject.toml
+          ${{ inputs.test-requirements-path }}
         sparse-checkout-cone-mode: false
+
+    - name: 'Set up Python'
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{inputs.python-version}}
+        cache: 'pip'
+        cache-dependency-path: ${{ inputs.test-requirements-path }}
 
     - name: 'Install package'
       shell: bash
       run: |
+        
+        source ${{ github.action_path }}/retry.sh
+        
         echo "::group::Update pip"
         python -m pip install --upgrade pip
         echo "::endgroup::"
         
-        if [ "${{inputs.package-source}}" = "local" ]; then
+        if [ "${{inputs.package-source}}" = "GitHub" ]; then
             python -m pip install .
-        elif [ "${{ inputs.package-source }}" = "testpypi" ]; then
+        elif [ "${{ inputs.package-source }}" = "TestPyPI" ]; then
             python -m pip install -r requirements.txt
-            python -m pip install \
+            COMMAND = "python -m pip install \
               ${{ inputs.package-name }}==${{ inputs.package-version }} \
               --no-deps \
-              --index-url https://test.pypi.org/simple/
-        elif [ "${{inputs.package-source}}" = "pypi" ]; then
-            python -m pip install \
-              ${{ inputs.package-name }}==${{ inputs.package-version }}
+              --index-url https://test.pypi.org/simple/"
+            retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
+        elif [ "${{inputs.package-source}}" = "PyPI" ]; then
+            COMMAND = "python -m pip install ${{ inputs.package-name }}==${{ inputs.package-version }}"
+            retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
         else
             echo "Invalid package-source: '${{ inputs.package-source }}'."
             exit 1
         fi
-
-    - name: 'Install test dependencies'
-      shell: bash
-      run: |
-        python -m pip install --upgrade pytest pytest-cov pipreqs
-        python -m pip install -r tests/requirements.txt
+        
+        python -m pip install -r ${{ inputs.test-requirements-path }}
 
     - name: 'Display info'
       shell: bash
@@ -141,10 +169,10 @@ runs:
           --cov-report=xml
 
     - name: 'Upload coverage reports to codecov'
-      if: always() && ${{inputs.install-source}} == 'local'
+      if: always() && ${{inputs.package-source}} == 'local'
       # https://github.com/marketplace/actions/codecov
       # https://github.com/codecov/codecov-action
-      uses: codecov/codecov-action@v3.1.4
+      uses: codecov/codecov-action@v3
       with:
         fail_ci_if_error: false
         verbose: true
