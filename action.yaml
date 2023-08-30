@@ -8,18 +8,6 @@ branding:
 
 inputs:
 
-  package-source:
-    description: |
-      Source to install the package; options: 'local', 'testpypi', 'pypi'.
-    default: local
-    required: false
-
-  package-version:
-    description: |
-      Version of the package to install, when `install_source` is 'testpypi' or 'pypi'.
-    default: ""
-    required: false
-
   checkout-ref:
     description: |
       Reference to checkout, i.e. the `ref` input of `actions/checkout`.
@@ -29,6 +17,24 @@ inputs:
   python-version:
     description: Python version to use.
     default: '3.x'
+    required: false
+
+  package-source:
+    description: |
+      Source to install the package; options: 'local', 'testpypi', 'pypi'.
+    default: local
+    required: false
+
+  package-name:
+    description: |
+      Name of the package to install, when `install_source` is 'testpypi' or 'pypi'.
+    default: ""
+    required: false
+
+  package-version:
+    description: |
+      Version of the package to install, when `install_source` is 'testpypi' or 'pypi'.
+    default: ""
     required: false
 
 
@@ -72,17 +78,17 @@ runs:
         
         if [ "${{inputs.package-source}}" = "local" ]; then
             python -m pip install .
-        elif [ "${{inputs.package-source}}" = "testpypi" ]; then
+        elif [ "${{ inputs.package-source }}" = "testpypi" ]; then
             python -m pip install -r requirements.txt
             python -m pip install \
-              ${{fromJSON(needs.metadata.outputs.json).package.name}}==${{inputs.package-version}} \
+              ${{ inputs.package-name }}==${{ inputs.package-version }} \
               --no-deps \
               --index-url https://test.pypi.org/simple/
         elif [ "${{inputs.package-source}}" = "pypi" ]; then
             python -m pip install \
-              ${{fromJSON(needs.metadata.outputs.json).package.name}}==${{inputs.package-version}}
+              ${{ inputs.package-name }}==${{ inputs.package-version }}
         else
-            echo "Invalid package-source: '${{inputs.package-source}}'."
+            echo "Invalid package-source: '${{ inputs.package-source }}'."
             exit 1
         fi
 
@@ -131,8 +137,8 @@ runs:
       shell: bash
       run: >-
         pytest -c pyproject.toml
-        --cov=${{needs.metadata.outputs.package-name}}
-        --cov-report=xml
+          --cov=${{needs.metadata.outputs.package-name}}
+          --cov-report=xml
 
     - name: 'Upload coverage reports to codecov'
       if: always() && ${{inputs.install-source}} == 'local'
