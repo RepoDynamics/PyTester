@@ -109,16 +109,24 @@ runs:
         
         if [ "${{inputs.package-source}}" = "GitHub" ]; then
             python -m pip install .
+        
         elif [ "${{ inputs.package-source }}" = "TestPyPI" ]; then
             python -m pip install -r requirements.txt
+
             COMMAND = "python -m pip install \
               ${{ inputs.package-name }}==${{ inputs.package-version }} \
               --no-deps \
               --index-url https://test.pypi.org/simple/"
             retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
+        
         elif [ "${{inputs.package-source}}" = "PyPI" ]; then
-            COMMAND = "python -m pip install ${{ inputs.package-name }}==${{ inputs.package-version }}"
+            if [ -z "${{ inputs.package-version }}" ]; then
+                COMMAND="python -m pip install ${{ inputs.package-name }}"
+            else
+                COMMAND="python -m pip install ${{ inputs.package-name }}==${{ inputs.package-version }}"
+            fi
             retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
+
         else
             echo "Invalid package-source: '${{ inputs.package-source }}'."
             exit 1
