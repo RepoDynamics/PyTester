@@ -107,7 +107,7 @@ runs:
       shell: bash
       run: |
         
-        source ${{ github.action_path }}/retry.sh
+        source $(echo "${{ github.action_path }}" | sed 's/\\/\//g')/retry.sh
         
         echo "::group::Update pip"
         python -m pip install --upgrade pip
