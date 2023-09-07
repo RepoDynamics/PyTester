@@ -119,7 +119,7 @@ runs:
         elif [ "${{ inputs.package-source }}" = "TestPyPI" ]; then
             python -m pip install -r requirements.txt
 
-            COMMAND = "python -m pip install \
+            COMMAND="python -m pip install \
               ${{ inputs.package-name }}==${{ inputs.package-version }} \
               --no-deps \
               --index-url https://test.pypi.org/simple/"
