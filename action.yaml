@@ -178,10 +178,7 @@ runs:
     - name: 'Run unit tests'
       shell: bash
       run: >-
-        pytest 
-          -c pyproject.toml
-          --cov=${{ inputs.package-name }}
-          --cov-report=xml
+        pytest -c pyproject.toml --cov=${{ inputs.package-name }} --cov-report=xml
 
     - name: 'Upload coverage reports to codecov'
       if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
