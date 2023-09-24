@@ -42,6 +42,18 @@ inputs:
     default: ""
     required: false
 
+  path-root:
+    description: |
+      Path to the root directory.
+    default: .
+    required: false
+
+  path-config:
+    description: |
+      Path to the configuration file.
+    default: pyproject.toml
+    required: false
+
   path-tests:
     description: |
       Path to the tests directory.
@@ -52,6 +64,12 @@ inputs:
     description: |
       Path to the test requirements file.
     default: tests/requirements.txt
+    required: false
+
+  path-coverage-reports:
+    description: |
+      Path to the coverage reports directory.
+    default: .local/report/pytest_cov
     required: false
 
   max-retries:
@@ -76,7 +94,7 @@ runs:
       run: |
         # Initialize
         printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n\n\n"
-        echo -e "\033[1;30;48;2;0;162;255m 1. Initialize  "
+        echo -e "\033[1;30;48;2;0;162;255m Initialize "
 
     - if: ${{ inputs.package-source == 'GitHub' }}
       uses: actions/checkout@v3
@@ -91,10 +109,11 @@ runs:
         ref: ${{ inputs.checkout-ref }}
         sparse-checkout-cone-mode: false
         sparse-checkout: |
+          ${{ inputs.path-root }}/.local
           ${{ inputs.path-tests }}
           ${{ inputs.path-tests-requirements }}
+          ${{ inputs.path-config }}          
           requirements.txt
-          pyproject.toml
 
     - name: 'Set up Python'
       uses: actions/setup-python@v4
@@ -106,13 +125,14 @@ runs:
     - name: 'Install package'
       shell: bash
       run: |
-        
+        # Setup Environment
         source $(echo "${{ github.action_path }}" | sed 's/\\/\//g')/retry.sh
         
         echo "::group::Update pip"
         python -m pip install --upgrade pip
         echo "::endgroup::"
         
+        echo "::group::Install Package"
         if [ "${{inputs.package-source}}" = "GitHub" ]; then
             python -m pip install .
         
@@ -137,8 +157,11 @@ runs:
             echo "Invalid package-source: '${{ inputs.package-source }}'."
             exit 1
         fi
+        echo "::endgroup::"
         
+        echo "::group::Install Test Requirements"
         python -m pip install -r ${{ inputs.path-tests-requirements }}
+        echo "::endgroup::"
 
     - name: 'Display info'
       shell: bash
@@ -178,7 +201,7 @@ runs:
     - name: 'Run unit tests'
       shell: bash
       run: >-
-        pytest -c pyproject.toml --cov=${{ inputs.package-name }} --cov-report=xml
+        pytest --rootdir=${{ inputs.path-root }} --config-file=${{ inputs.path-config }} 
 
     - name: 'Upload coverage reports to codecov'
       if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
@@ -186,6 +209,7 @@ runs:
       # https://github.com/codecov/codecov-action
       uses: codecov/codecov-action@v3
       with:
+        directory: ${{ inputs.path-coverage-reports }}
         fail_ci_if_error: false
         verbose: true
         env_vars: OS,PYTHON
