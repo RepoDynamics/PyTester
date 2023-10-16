@@ -13,7 +13,7 @@ inputs:
     default: ${{ github.repository }}
     required: false
 
-  checkout-ref:
+  ref:
     description: |
       Reference to checkout, i.e. the `ref` input of `actions/checkout`.
     default: ""
@@ -60,16 +60,10 @@ inputs:
     default: tests
     required: false
 
-  path-tests-requirements:
+  path-local:
     description: |
-      Path to the test requirements file.
-    default: tests/requirements.txt
-    required: false
-
-  path-coverage-reports:
-    description: |
-      Path to the coverage reports directory.
-    default: .local/report/pytest_cov
+      Path to the local directory.
+    default: .local
     required: false
 
   max-retries:
@@ -100,18 +94,17 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ${{ inputs.repository }}
-        ref: ${{ inputs.checkout-ref }}
+        ref: ${{ inputs.ref }}
         fetch-depth: 0
     - if: ${{ inputs.package-source != 'GitHub' }}
       uses: actions/checkout@v3
       with:
         repository: ${{ inputs.repository }}
-        ref: ${{ inputs.checkout-ref }}
+        ref: ${{ inputs.ref }}
         sparse-checkout-cone-mode: false
         sparse-checkout: |
-          ${{ inputs.path-root }}/.local
+          ${{ inputs.path-local }}
           ${{ inputs.path-tests }}
-          ${{ inputs.path-tests-requirements }}
           ${{ inputs.path-config }}          
           requirements.txt
 
@@ -119,8 +112,6 @@ runs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
-        cache: pip
-        cache-dependency-path: ${{ inputs.path-tests-requirements }}
 
     - name: 'Install package'
       shell: bash
@@ -159,8 +150,8 @@ runs:
         fi
         echo "::endgroup::"
         
-        echo "::group::Install Test Requirements"
-        python -m pip install -r ${{ inputs.path-tests-requirements }}
+        echo "::group::Install Test-Suite"
+        python -m pip install ${{ inputs.path-tests }}
         echo "::endgroup::"
 
     - name: 'Display info'
@@ -200,8 +191,7 @@ runs:
 
     - name: 'Run unit tests'
       shell: bash
-      run: >-
-        pytest --rootdir=${{ inputs.path-root }} --config-file=${{ inputs.path-config }} 
+      run: python -m ${{ inputs.package-name }}_tests
 
     - name: 'Upload coverage reports to codecov'
       if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
@@ -209,7 +199,7 @@ runs:
       # https://github.com/codecov/codecov-action
       uses: codecov/codecov-action@v3
       with:
-        directory: ${{ inputs.path-coverage-reports }}
+        directory: ${{ inputs.path-local }}/report/pytest_cov
         fail_ci_if_error: false
         verbose: true
         env_vars: OS,PYTHON
