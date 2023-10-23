@@ -90,23 +90,23 @@ runs:
         printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n\n\n"
         echo -e "\033[1;30;48;2;0;162;255m Initialize "
 
-    - if: ${{ inputs.package-source == 'GitHub' }}
-      uses: actions/checkout@v3
+#    - if: ${{ inputs.package-source == 'GitHub' }}
+    - uses: actions/checkout@v3
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.ref }}
         fetch-depth: 0
-    - if: ${{ inputs.package-source != 'GitHub' }}
-      uses: actions/checkout@v3
-      with:
-        repository: ${{ inputs.repository }}
-        ref: ${{ inputs.ref }}
-        sparse-checkout-cone-mode: false
-        sparse-checkout: |
-          ${{ inputs.path-local }}
-          ${{ inputs.path-tests }}
-          ${{ inputs.path-config }}          
-          requirements.txt
+#    - if: ${{ inputs.package-source != 'GitHub' }}
+#      uses: actions/checkout@v3
+#      with:
+#        repository: ${{ inputs.repository }}
+#        ref: ${{ inputs.ref }}
+#        sparse-checkout-cone-mode: false
+#        sparse-checkout: |
+#          ${{ inputs.path-local }}
+#          ${{ inputs.path-tests }}
+#          ${{ inputs.path-config }}
+#          requirements.txt
 
     - name: 'Set up Python'
       uses: actions/setup-python@v4
