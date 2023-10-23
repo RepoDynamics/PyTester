@@ -57,13 +57,13 @@ inputs:
   path-tests:
     description: |
       Path to the tests directory.
-    default: tests
+    default: ./tests
     required: false
 
   path-local:
     description: |
       Path to the local directory.
-    default: .local
+    default: ./.local
     required: false
 
   max-retries:
