@@ -8,21 +8,13 @@ branding:
 
 inputs:
 
-  repository:
-    description: Repository to checkout, i.e. the `repository` input of `actions/checkout`.
-    default: ${{ github.repository }}
-    required: false
+  config:
+    required: true
+    description: CI configuration as a JSON string.
 
-  ref:
-    description: |
-      Reference to checkout, i.e. the `ref` input of `actions/checkout`.
-    default: ""
-    required: false
-
-  python-version:
-    description: Python version to use.
-    default: '3.x'
-    required: false
+  metadata:
+    required: true
+    description: CI metadata as a JSON string.
 
   package-source:
     description: |
@@ -30,40 +22,14 @@ inputs:
     default: local
     required: false
 
-  package-name:
-    description: |
-      Name of the package to install, when `install_source` is 'testpypi' or 'pypi'.
-    default: ""
+  python-version:
+    description: Python version to use.
+    default: '3.x'
     required: false
 
-  package-version:
-    description: |
-      Version of the package to install, when `install_source` is 'testpypi' or 'pypi'.
-    default: ""
-    required: false
-
-  path-root:
-    description: |
-      Path to the root directory.
-    default: .
-    required: false
-
-  path-config:
-    description: |
-      Path to the configuration file.
-    default: pyproject.toml
-    required: false
-
-  path-tests:
-    description: |
-      Path to the tests directory.
-    default: ./tests
-    required: false
-
-  path-local:
-    description: |
-      Path to the local directory.
-    default: ./.local
+  os:
+    description: Current operating system of the job.
+    default: ubuntu-latest
     required: false
 
   max-retries:
@@ -93,8 +59,8 @@ runs:
 #    - if: ${{ inputs.package-source == 'GitHub' }}
     - uses: actions/checkout@v3
       with:
-        repository: ${{ inputs.repository }}
-        ref: ${{ inputs.ref }}
+        repository: ${{ fromJSON(inputs.config).checkout.repository }}
+        ref: ${{ fromJSON(inputs.config).checkout.ref }}
         fetch-depth: 0
 #    - if: ${{ inputs.package-source != 'GitHub' }}
 #      uses: actions/checkout@v3
@@ -131,16 +97,16 @@ runs:
             python -m pip install -r requirements.txt
 
             COMMAND="python -m pip install \
-              ${{ inputs.package-name }}==${{ inputs.package-version }} \
+              ${{ fromJson(inputs.metadata).package.name }}==${{ fromJSON(inputs.config).package.version }} \
               --no-deps \
               --index-url https://test.pypi.org/simple/"
             retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
         
         elif [ "${{inputs.package-source}}" = "PyPI" ]; then
-            if [ -z "${{ inputs.package-version }}" ]; then
-                COMMAND="python -m pip install ${{ inputs.package-name }}"
+            if [ -z "${{ fromJSON(inputs.config).package.version }}" ]; then
+                COMMAND="python -m pip install ${{ fromJson(inputs.metadata).package.name }}"
             else
-                COMMAND="python -m pip install ${{ inputs.package-name }}==${{ inputs.package-version }}"
+                COMMAND="python -m pip install ${{ fromJson(inputs.metadata).package.name }}==${{ fromJSON(inputs.config).package.version }}"
             fi
             retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
 
@@ -151,7 +117,7 @@ runs:
         echo "::endgroup::"
         
         echo "::group::Install Test-Suite"
-        python -m pip install ${{ inputs.path-tests }}
+        python -m pip install ${{ fromJson(inputs.metadata).path.dir.tests }}
         echo "::endgroup::"
 
     - name: 'Display info'
@@ -178,20 +144,41 @@ runs:
         echo "::group::File tree"
         find .
         echo "::endgroup::"
-    
-    - name: 'Test import package'
-      shell: python
-      run: |
-        import ${{ inputs.package-name }} as pkg
-        print(pkg.__version__)
 
 #    - name: 'Run dependency tests'
 #      shell: bash
 #      run: pipreqs ./src --debug --print
 
-    - name: 'Run unit tests'
+    - name: 'Load PyTest Cache'
+      uses: actions/cache@v3
+      with:
+        path: ${{ fromJson(inputs.metadata).path.dir.local.cache.pytest }}
+        key: >-
+          pytest
+          -${{ inputs.os }}
+          -${{ inputs.python-version }}
+          -${{ fromJSON(inputs.config).checkout.ref_before }}
+
+    - name: 'Load Coverage Cache'
+      uses: actions/cache@v3
+      with:
+        path: ${{ fromJson(inputs.metadata).path.dir.local.cache.coverage }}
+        key: >-
+          coverage
+          -${{ inputs.os }}
+          -${{ inputs.python-version }}
+          -${{ fromJSON(inputs.config).checkout.ref_before }}
+
+    - name: 'Run Test-Suite'
       shell: bash
-      run: python -m ${{ inputs.package-name }}_tests
+      run: python -m ${{ fromJson(inputs.metadata).package.name }}_tests
+
+    - name: 'Upload reports'
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: Test-Suite Reports
+        path: ${{ fromJson(inputs.metadata).path.dir.local.report }}
 
     - name: 'Upload coverage reports to codecov'
       if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
@@ -199,7 +186,7 @@ runs:
       # https://github.com/codecov/codecov-action
       uses: codecov/codecov-action@v3
       with:
-        directory: ${{ inputs.path-local }}/report/pytest_cov
+        directory: ${{ fromJson(inputs.metadata).path.dir.local.report.coverage }}
         fail_ci_if_error: false
         verbose: true
         env_vars: OS,PYTHON
