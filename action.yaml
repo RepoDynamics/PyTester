@@ -178,7 +178,7 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: Test-Suite Reports
-        path: ${{ fromJson(inputs.metadata).path.dir.local.report }}
+        path: ${{ fromJson(inputs.metadata).path.dir.local.report.root }}
 
     - name: 'Upload coverage reports to codecov'
       if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
