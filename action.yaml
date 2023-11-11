@@ -117,7 +117,7 @@ runs:
         echo "::endgroup::"
         
         echo "::group::Install Test-Suite"
-        python -m pip install ${{ fromJson(inputs.metadata).path.dir.tests }}
+        python -m pip install ./${{ fromJson(inputs.metadata).path.dir.tests }}
         echo "::endgroup::"
 
     - name: 'Display info'
