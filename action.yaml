@@ -8,41 +8,76 @@ branding:
 
 inputs:
 
-  config:
-    required: true
-    description: CI configuration as a JSON string.
+  repository:
+    description: Full name of the repository, i.e., 'owner-username/repo-name'.
+    required: false
+    default: ${{ github.repository }}
 
-  metadata:
+  ref:
+    description: Git reference to check out in the repository.
+    required: false
+    default: ${{ github.ref }}
+
+  path-tests:
+    description: Path to the tests directory relative to the repository root.
     required: true
-    description: CI metadata as a JSON string.
 
   package-source:
-    description: |
-      Source to install the package; options: 'GitHub', 'TestPyPI', 'PyPI'.
-    default: local
+    description: Source to install the package; either 'GitHub', 'TestPyPI', or 'PyPI'.
     required: false
+    default: local
+
+  package-name:
+    description: Name of the package to install, when `package-source` is 'PyPI' or 'TestPyPI'.
+    required: false
+    default: ""
+
+  package-version:
+    description: |
+      Version of the package to download and install, when `package-source` is 'PyPI' or 'TestPyPI'.
+      If not specified, the latest version will be installed.
+    required: false
+    default: ""
 
   python-version:
     description: Python version to use.
-    default: '3.x'
     required: false
+    default: '3.x'
 
   os:
     description: Current operating system of the job.
-    default: ubuntu-latest
     required: false
+    default: ubuntu-latest
+
+  path-report-pytest:
+    description: Path to the pytest reports directory relative to the repository root.
+    required: false
+    default: ""
+
+  path-report-coverage:
+    description: Path to the coverage reports directory relative to the repository root.
+    required: false
+    default: ""
+
+  path-cache-pytest:
+    description: Path to the pytest cache directory relative to the repository root.
+    required: false
+    default: ""
+
+  path-cache-coverage:
+    description: Path to the coverage cache directory relative to the repository root.
+    required: false
+    default: ""
 
   max-retries:
-    description: |
-      Maximum number of retries.
-    default: '15'
+    description: Maximum number of retries for downloading the package from PyPI or TestPyPI.
     required: false
+    default: '15'
 
   retry-delay:
-    description: |
-      Delay between retries in seconds.
-    default: '60'
+    description: Delay between retries in seconds.
     required: false
+    default: '60'
 
 
 runs:
@@ -57,10 +92,10 @@ runs:
         echo -e "\033[1;30;48;2;0;162;255m Initialize "
 
 #    - if: ${{ inputs.package-source == 'GitHub' }}
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
-        repository: ${{ fromJSON(inputs.config).checkout.repository }}
-        ref: ${{ fromJSON(inputs.config).checkout.ref }}
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.ref }}
         fetch-depth: 0
 #    - if: ${{ inputs.package-source != 'GitHub' }}
 #      uses: actions/checkout@v3
@@ -97,16 +132,16 @@ runs:
             python -m pip install -r requirements.txt
 
             COMMAND="python -m pip install \
-              ${{ fromJson(inputs.metadata).package.name }}==${{ fromJSON(inputs.config).package.version }} \
+              ${{ inputs.package-name }}==${{ inputs.package-version }} \
               --no-deps \
               --index-url https://test.pypi.org/simple/"
             retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
         
         elif [ "${{inputs.package-source}}" = "PyPI" ]; then
-            if [ -z "${{ fromJSON(inputs.config).package.version }}" ]; then
-                COMMAND="python -m pip install ${{ fromJson(inputs.metadata).package.name }}"
+            if [ -z "${{ inputs.package-version }}" ]; then
+                COMMAND="python -m pip install ${{ inputs.package-name }}"
             else
-                COMMAND="python -m pip install ${{ fromJson(inputs.metadata).package.name }}==${{ fromJSON(inputs.config).package.version }}"
+                COMMAND="python -m pip install ${{ inputs.package-name }}==${{ inputs.package-version }}"
             fi
             retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
 
@@ -117,7 +152,7 @@ runs:
         echo "::endgroup::"
         
         echo "::group::Install Test-Suite"
-        python -m pip install ./${{ fromJson(inputs.metadata).path.dir.tests }}
+        python -m pip install ./${{ inputs.path-tests }}
         echo "::endgroup::"
 
     - name: 'Display info'
@@ -152,42 +187,44 @@ runs:
     - name: 'Load PyTest Cache'
       uses: actions/cache@v3
       with:
-        path: ${{ fromJson(inputs.metadata).path.dir.local.cache.pytest }}
+        path: ${{ inputs.path-cache-pytest }}
         key: >-
           pytest
           -${{ inputs.os }}
           -${{ inputs.python-version }}
-          -${{ fromJSON(inputs.config).checkout.ref_before }}
+#          -${{ fromJSON(inputs.config).checkout.ref_before }}
 
     - name: 'Load Coverage Cache'
       uses: actions/cache@v3
       with:
-        path: ${{ fromJson(inputs.metadata).path.dir.local.cache.coverage }}
+        path: ${{ inputs.path-cache-coverage }}
         key: >-
           coverage
           -${{ inputs.os }}
           -${{ inputs.python-version }}
-          -${{ fromJSON(inputs.config).checkout.ref_before }}
+#          -${{ fromJSON(inputs.config).checkout.ref_before }}
 
     - name: 'Run Test-Suite'
       shell: bash
-      run: python -m ${{ fromJson(inputs.metadata).package.name }}_tests
+      run: python -m ${{ inputs.package-name }}_tests
 
     - name: 'Upload reports'
       if: always()
       uses: actions/upload-artifact@v3
       with:
         name: Test-Suite Reports
-        path: ${{ fromJson(inputs.metadata).path.dir.local.report.root }}
+        path: ${{ inputs.path-report-pytest }}
 
     - name: 'Upload coverage reports to codecov'
       if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
       # https://github.com/marketplace/actions/codecov
       # https://github.com/codecov/codecov-action
+      env:
+        OS: ${{ inputs.os }}
+        PYTHON: ${{ inputs.python-version }}
       uses: codecov/codecov-action@v3
       with:
-        directory: ${{ fromJson(inputs.metadata).path.dir.local.report.coverage }}
+        directory: ${{ inputs.path-report-coverage }}
         fail_ci_if_error: false
         verbose: true
         env_vars: OS,PYTHON
-
