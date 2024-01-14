@@ -22,6 +22,10 @@ inputs:
     description: Path to the tests directory relative to the repository root.
     required: true
 
+  testsuite-import-name:
+    description: Name of the testsuite package to import.
+    required: true
+
   package-source:
     description: Source to install the package; either 'GitHub', 'TestPyPI', or 'PyPI'.
     required: false
@@ -206,7 +210,7 @@ runs:
 
     - name: 'Run Test-Suite'
       shell: bash
-      run: python -m ${{ inputs.package-name }}_tests
+      run: python -m ${{ inputs.testsuite-import-name }}
 
     - name: 'Upload reports'
       if: always()
