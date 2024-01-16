@@ -133,7 +133,9 @@ runs:
             python -m pip install .
         
         elif [ "${{ inputs.package-source }}" = "TestPyPI" ]; then
-            python -m pip install -r requirements.txt
+            if [ -f "requirements.txt" ]; then
+              python -m pip install -r requirements.txt
+            fi
 
             COMMAND="python -m pip install \
               ${{ inputs.package-name }}==${{ inputs.package-version }} \
