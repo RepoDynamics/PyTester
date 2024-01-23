@@ -113,15 +113,11 @@ runs:
       shell: bash
       run: |
         # Initialization
-        
+        printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n\n\n"
         echo "::group::Install Action Requirements"
         python -m pip install -r "${{ github.action_path }}/requirements.txt"
-        python -m pip list
         echo "::endgroup::"
-        
-        am-print-file "${{github.action_path}}/logo.txt"
-#        printf "\n\n$(cat ${{github.action_path}}/logo.txt)"
-        am-print-h1 "Initialization" --margin-top 0
+        am-print-h1 "Initialization"
         am-print-h2 "Repository Checkout"
 
     - name: 'Repository Checkout'
