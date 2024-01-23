@@ -151,6 +151,9 @@ runs:
       run: |
         # Environment Setup
         python "${{ github.action_path }}/heading.py" 2 "Environment Setup"
+        echo "::group::Upgrade pip"
+        python -m pip install --upgrade pip
+        echo "::endgroup::"
         echo "::group::Install Action Requirements"
         python -m pip install -r "${{ github.action_path }}/requirements.txt"
         echo "::endgroup::"
@@ -188,23 +191,31 @@ runs:
           -${{ inputs.python-version }}
 #          -${{ fromJSON(inputs.config).checkout.ref_before }}
 
-    - name: 'Test-Suite Run'
+    - name: 'Test-Suite'
       shell: bash
       run: |
-        # Test-Suite Run
-        am-print-h1 "Test-Suite Run"
+        # Test-Suite
+        am-print-h1 "Test-Suite"
         cd repo
         python -m ${{ inputs.testsuite-import-name }}
+        am-print-h1 "Finalization"
+        am-print-h2 "Report Upload"
 
-    - name: 'Upload reports'
-      if: always()
+    - name: 'Report Upload'
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v3
       with:
         name: Test-Suite Reports
         path: repo/${{ inputs.path-report-pytest }}
 
-    - name: 'Upload coverage reports to codecov'
-      if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
+
+    - name: 'Coverage Upload'
+      if: ${{ !cancelled() && inputs.package-source == 'PyPI' }}
+      shell: bash
+      run: |
+        # Coverage Upload
+        am-print-h2 "Coverage Upload"
+    - if: ${{ !cancelled() && inputs.package-source == 'PyPI' }}
       # https://github.com/marketplace/actions/codecov
       # https://github.com/codecov/codecov-action
       env:
