@@ -194,6 +194,7 @@ def submit_log_shell_output(
         details=shell_output.details,
     )
     if not shell_output.success:
+        sys.stdout.flush()
         sys.exit(summary)
     return
 
