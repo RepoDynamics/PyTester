@@ -1,5 +1,6 @@
 from typing import Callable, Literal
 import sys
+import traceback
 from pathlib import Path
 import actionman
 import retryit
@@ -198,38 +199,42 @@ def submit_log_shell_output(
 
 
 if __name__ == "__main__":
-    logger = actionman.log.logger(initial_section_level=3)
-    logger.section("Environment Setup")
-    inputs = actionman.io.read_function_args_from_environment_variables(
-        function=setup_environment,
-        name_prefix="RD_PYTESTER_ES__",
-        logger=logger,
-    )
-    setup_environment(**inputs)
-    logger.section_end()
-    logger.section("Environment Info")
-    logger.entry(
-        status="info",
-        title="Python Version",
-        details=[f"Python version: {sys.version}"],
-    )
-    logger.entry(
-        status="info",
-        title="Installed Packages",
-        summary=actionman.shell.pip_list().out,
-    )
-    logger.entry(
-        status="info",
-        title="Hardware and OS Info",
-        summary=actionman.shell.run(["uname", "-a"]).out,
-    )
-    logger.entry(
-        status="info",
-        title="System Resources",
-        summary=actionman.shell.run(["ulimit", "-a"]).out,
-    )
-    logger.entry(
-        status="info",
-        title="Disk Space",
-        summary=actionman.shell.run(["df", "-h"]).out,
-    )
+    try:
+        logger = actionman.log.logger(initial_section_level=3)
+        logger.section("Environment Setup")
+        inputs = actionman.io.read_function_args_from_environment_variables(
+            function=setup_environment,
+            name_prefix="RD_PYTESTER_ES__",
+            logger=logger,
+        )
+        setup_environment(**inputs)
+        logger.section_end()
+        logger.section("Environment Info")
+        logger.entry(
+            status="info",
+            title="Python Version",
+            details=[f"Python version: {sys.version}"],
+        )
+        logger.entry(
+            status="info",
+            title="Installed Packages",
+            summary=actionman.shell.pip_list().out,
+        )
+        logger.entry(
+            status="info",
+            title="Hardware and OS Info",
+            summary=actionman.shell.run(["uname", "-a"]).out,
+        )
+        logger.entry(
+            status="info",
+            title="System Resources",
+            summary=actionman.shell.run(["ulimit", "-a"]).out,
+        )
+        logger.entry(
+            status="info",
+            title="Disk Space",
+            summary=actionman.shell.run(["df", "-h"]).out,
+        )
+    except Exception as e:
+        sys.stdout.flush()
+        sys.exit(f"{e.__class__.__name__}: {e}\n{traceback.format_exc()}")
