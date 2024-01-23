@@ -96,12 +96,12 @@ inputs:
   retry-sleep-seconds-total:
     description: Maximum number of retries for downloading the package from PyPI or TestPyPI.
     required: false
-    default: '15'
+    default: '900'
 
   retry-sleep-seconds:
     description: Delay between retries in seconds.
     required: false
-    default: '60'
+    default: '30'
 
 
 runs:
