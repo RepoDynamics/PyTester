@@ -106,7 +106,7 @@ inputs:
   test:
     description: Whether to run the test workflow on package.
     required: true
-    default: XXXX
+    default: ZZZ
 
 
 runs:
