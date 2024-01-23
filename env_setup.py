@@ -65,7 +65,10 @@ def install_package(
             return not shell_output.success
         retry_logger = retryit.logger.full(
             log_function=logger.entry,
-            title=f"Install Package From {'TestPyPI' if source == 'testpypi' else 'PyPI'} (attempt {{count_tries}})",
+            title=(
+                f"Install Package From {'TestPyPI' if source == 'testpypi' else 'PyPI'} "
+                f"(attempt {{count_tries}})"
+            ),
             details=(
                 "Command: {value.cmd}",
                 "Executed: {value.executed}",
@@ -75,7 +78,10 @@ def install_package(
             ),
             case_return_accepted=(
                 "success",
-                f"Installing package from {'TestPyPI' if source == 'testpypi' else 'PyPI'} was successful. {{value.summary}}"
+                (
+                    f"Installing package from {'TestPyPI' if source == 'testpypi' else 'PyPI'} "
+                    f"was successful. {{value.summary}}"
+                )
             ),
             case_return_rejected_and_retry=(
                 "attention",
@@ -156,7 +162,7 @@ def install_package(
 
 
 def install_testsuite(
-    path_repo: str,
+    path_repo: Path,
     path_setup_testsuite: str,
 ):
     submit_log_shell_output(
