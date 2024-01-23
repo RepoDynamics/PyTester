@@ -103,6 +103,11 @@ inputs:
     required: false
     default: '30'
 
+  test:
+    description: Whether to run the test workflow on package.
+    required: false
+    default: XXXX
+
 
 runs:
 
@@ -113,6 +118,7 @@ runs:
       shell: bash
       run: |
         # Initialization
+        echo "${{ inputs.test }}"
         printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n"
         python "${{ github.action_path }}/heading.py" 1 "Initialization"
         python "${{ github.action_path }}/heading.py" 2 "Repository Checkout"
