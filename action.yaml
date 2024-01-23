@@ -195,6 +195,7 @@ runs:
       run: |
         # Test-Suite Run
         am-print-h1 "Test-Suite Run"
+        cd repo
         python -m ${{ inputs.testsuite-import-name }}
 
     - name: 'Upload reports'
