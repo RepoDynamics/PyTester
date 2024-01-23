@@ -114,7 +114,7 @@ runs:
       run: |
         # Initialization
         
-        echo "::group::Install PyTests Requirements"
+        echo "::group::Install Action Requirements"
         python -m pip install -r "${{ github.action_path }}/requirements.txt"
         python -m pip list
         echo "::endgroup::"
