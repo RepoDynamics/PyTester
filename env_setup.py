@@ -17,6 +17,7 @@ def setup_environment(
     retry_sleep_seconds: float,
     retry_sleep_seconds_total: float,
 ):
+    logger.section("Installation")
     source = package_source.lower()
     if source not in ("github", "pypi", "testpypi"):
         sys.exit(
@@ -24,7 +25,6 @@ def setup_environment(
             f"Expected one of 'GitHub', 'PyPI', or 'TestPyPI', but got '{source}'."
         )
     path_repo = Path(path_repo).resolve()
-    prepare()
     install_package(
         source=source,
         path_repo=path_repo,
@@ -39,14 +39,7 @@ def setup_environment(
         path_repo=path_repo,
         path_setup_testsuite=path_setup_testsuite,
     )
-    return
-
-
-def prepare():
-    output_upgrade_pip = actionman.shell.pip_install_package(name="pip", upgrade=True)
-    submit_log_shell_output(
-        shell_output=output_upgrade_pip, title="Upgrade pip", prepend_summary="Upgrading pip"
-    )
+    logger.section_end()
     return
 
 
@@ -204,7 +197,7 @@ def submit_log_shell_output(
 if __name__ == "__main__":
     try:
         logger = actionman.log.logger(initial_section_level=3)
-        logger.section("Environment Setup")
+        logger.section("Package & Test-Suite Setup")
         inputs = actionman.io.read_function_args_from_environment_variables(
             function=setup_environment,
             name_prefix="RD_PYTESTER_ES__",
