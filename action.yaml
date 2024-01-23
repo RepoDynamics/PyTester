@@ -114,7 +114,7 @@ runs:
       run: |
         # Initialization
         echo "✅"
-        python -c "print('\u2705')"
+        python -c "import sys;import io;sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8');print('\u2705')"
         python -c "print('✅')"
         printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n"
         python "${{ github.action_path }}/heading.py" 1 "Initialization"
