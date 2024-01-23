@@ -198,7 +198,7 @@ def submit_log_shell_output(
 
 
 if __name__ == "__main__":
-    logger = actionman.log.logger(initial_section_level=2)
+    logger = actionman.log.logger(initial_section_level=3)
     logger.section("Environment Setup")
     inputs = actionman.io.read_function_args_from_environment_variables(
         function=setup_environment,
