@@ -167,7 +167,7 @@ runs:
         am-print-h2 "PyTest Cache"
     - uses: actions/cache@v3
       with:
-        path: ${{ inputs.path-cache-pytest }}
+        path: repo/${{ inputs.path-cache-pytest }}
         key: >-
           pytest
           -${{ inputs.os }}
@@ -181,7 +181,7 @@ runs:
         am-print-h2 "Coverage Cache"
     - uses: actions/cache@v3
       with:
-        path: ${{ inputs.path-cache-coverage }}
+        path: repo/${{ inputs.path-cache-coverage }}
         key: >-
           coverage
           -${{ inputs.os }}
@@ -201,7 +201,7 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: Test-Suite Reports
-        path: ${{ inputs.path-report-pytest }}
+        path: repo/${{ inputs.path-report-pytest }}
 
     - name: 'Upload coverage reports to codecov'
       if: ${{ !cancelled() && inputs.package-source == 'GitHub' }}
@@ -212,7 +212,7 @@ runs:
         PYTHON: ${{ inputs.python-version }}
       uses: codecov/codecov-action@v3
       with:
-        directory: ${{ inputs.path-report-coverage }}
+        directory: repo/${{ inputs.path-report-coverage }}
         fail_ci_if_error: false
         verbose: true
         env_vars: OS,PYTHON
