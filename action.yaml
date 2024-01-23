@@ -113,12 +113,9 @@ runs:
       shell: bash
       run: |
         # Initialization
-        printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n\n\n"
-        echo "::group::Install Action Requirements"
-        python -m pip install -r "${{ github.action_path }}/requirements.txt"
-        echo "::endgroup::"
-        am-print-h1 "Initialization"
-        am-print-h2 "Repository Checkout"
+        printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n"
+        python "${{ github.action_path }}/heading.py" 1 "Initialization"
+        python "${{ github.action_path }}/heading.py" 2 "Repository Checkout"
 
     - name: 'Repository Checkout'
       uses: actions/checkout@v4
@@ -133,7 +130,7 @@ runs:
       shell: bash
       run: |
         # Python Setup
-        am-print-h2 "Python Setup"
+        python "${{ github.action_path }}/heading.py" 2 "Python Setup"
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
@@ -152,6 +149,10 @@ runs:
       shell: bash
       run: |
         # Environment Setup
+        python "${{ github.action_path }}/heading.py" 2 "Environment Setup"
+        echo "::group::Install Action Requirements"
+        python -m pip install -r "${{ github.action_path }}/requirements.txt"
+        echo "::endgroup::"
         python "${{ github.action_path }}/env_setup.py"
 
 #    - name: 'Run dependency tests'
