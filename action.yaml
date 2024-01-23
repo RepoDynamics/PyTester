@@ -114,6 +114,7 @@ runs:
       run: |
         # Initialization
         echo "✅"
+        python -c "print('\U0002705')"
         python -c "print('✅')"
         printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n"
         python "${{ github.action_path }}/heading.py" 1 "Initialization"
