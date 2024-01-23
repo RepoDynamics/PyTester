@@ -113,7 +113,7 @@ runs:
       shell: bash
       run: |
         # Initialization
-        LOGO_PATH=$(cygpath -u "${{github.action_path}}"/logo.txt)
+        LOGO_PATH=$(echo "${{github.action_path}}/logo.txt" | sed -e 's/\\/\//g' -e 's/://')
         printf "\n\n$(cat $LOGO_PATH)\n"
         python "${{ github.action_path }}/heading.py" 1 "Initialization"
         python "${{ github.action_path }}/heading.py" 2 "Repository Checkout"
