@@ -18,9 +18,20 @@ inputs:
     required: false
     default: ${{ github.ref }}
 
-  path-tests:
-    description: Path to the tests directory relative to the repository root.
-    required: true
+  path-setup-testsuite:
+    description: >-
+      Path (relative to the repository root) to the directory containing 
+      the test-suite's setup file (e.g., pyproject.toml).
+    required: false
+    default: ./tests
+
+  path-setup-package:
+    description: >-
+      Path (relative to the repository root) to the directory containing 
+      the package's setup file (e.g., pyproject.toml).
+      This is only used when `package-source` is set to 'GitHub'.
+    required: false
+    default: .
 
   testsuite-import-name:
     description: Name of the testsuite package to import.
@@ -53,6 +64,15 @@ inputs:
     required: false
     default: ubuntu-latest
 
+  path-requirements-package:
+    description: |
+      Path (relative to the repository root) to the requirements.txt file for the package.
+      This is only used when `package-source` is 'TestPyPI', in which case the package will
+      be installed without its dependencies from TestPyPI, and the dependencies will be
+      installed from the requirements.txt file to avoid security vulnerabilities and other issues.
+    required: false
+    default: "requirements.txt"
+
   path-report-pytest:
     description: Path to the pytest reports directory relative to the repository root.
     required: false
@@ -73,125 +93,81 @@ inputs:
     required: false
     default: ""
 
-  max-retries:
+  retry-sleep-seconds-total:
     description: Maximum number of retries for downloading the package from PyPI or TestPyPI.
     required: false
     default: '15'
 
-  retry-delay:
+  retry-sleep-seconds:
     description: Delay between retries in seconds.
     required: false
     default: '60'
 
 
 runs:
+
   using: "composite"
   steps:
 
-    - name: 'Initialize'
+    - name: 'Initialization'
       shell: bash
       run: |
-        # Initialize
-        printf "\n\n$(cat ${{github.action_path}}/logo.txt)\n\n\n"
-        echo -e "\033[1;30;48;2;0;162;255m Initialize "
+        # Initialization
+        
+        echo "::group::Install PyTests Requirements"
+        python -m pip install -r "${{ github.action_path }}/requirements.txt"
+        python -m pip list
+        echo "::endgroup::"
+        
+        am-print-file "${{github.action_path}}/logo.txt"
+#        printf "\n\n$(cat ${{github.action_path}}/logo.txt)"
+        am-print-h1 "Initialization" --margin-top 0
+        am-print-h2 "Repository Checkout"
 
-#    - if: ${{ inputs.package-source == 'GitHub' }}
-    - uses: actions/checkout@v4
+    - name: 'Repository Checkout'
+      uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.ref }}
-        fetch-depth: 0
-#    - if: ${{ inputs.package-source != 'GitHub' }}
-#      uses: actions/checkout@v3
-#      with:
-#        repository: ${{ inputs.repository }}
-#        ref: ${{ inputs.ref }}
-#        sparse-checkout-cone-mode: false
-#        sparse-checkout: |
-#          ${{ inputs.path-local }}
-#          ${{ inputs.path-tests }}
-#          ${{ inputs.path-config }}
-#          requirements.txt
+        fetch-tags: true
+        path: repo
+#        fetch-depth: 0
 
-    - name: 'Set up Python'
-      uses: actions/setup-python@v5
+    - name: 'Python Setup'
+      shell: bash
+      run: |
+        # Python Setup
+        am-print-h2 "Python Setup"
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: 'Install package'
+    - name: 'Environment Setup'
+      env:
+        RD_PYTESTER_ES__PATH_REPO: repo
+        RD_PYTESTER_ES__PATH_SETUP_TESTSUITE: ${{ inputs.path-setup-testsuite }}
+        RD_PYTESTER_ES__PATH_SETUP_PACKAGE: ${{ inputs.path-setup-package }}
+        RD_PYTESTER_ES__PACKAGE_SOURCE: ${{ inputs.package-source }}
+        RD_PYTESTER_ES__PACKAGE_NAME: ${{ inputs.package-name }}
+        RD_PYTESTER_ES__PACKAGE_VERSION: ${{ inputs.package-version }}
+        RD_PYTESTER_ES__PATH_REQUIREMENTS_PACKAGE: ${{ inputs.path-requirements-package }}
+        RD_PYTESTER_ES__RETRY_SLEEP_SECONDS: ${{ inputs.retry-sleep-seconds }}
+        RD_PYTESTER_ES__RETRY_SLEEP_SECONDS_TOTAL: ${{ inputs.retry-sleep-seconds-total }}
       shell: bash
       run: |
-        # Setup Environment
-        source $(echo "${{ github.action_path }}" | sed 's/\\/\//g')/retry.sh
-        
-        echo "::group::Update pip"
-        python -m pip install --upgrade pip
-        echo "::endgroup::"
-        
-        echo "::group::Install Package"
-        if [ "${{inputs.package-source}}" = "GitHub" ]; then
-            python -m pip install .
-        
-        elif [ "${{ inputs.package-source }}" = "TestPyPI" ]; then
-            if [ -f "requirements.txt" ]; then
-              python -m pip install -r requirements.txt
-            fi
-
-            COMMAND="python -m pip install \
-              ${{ inputs.package-name }}==${{ inputs.package-version }} \
-              --no-deps \
-              --index-url https://test.pypi.org/simple/"
-            retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
-        
-        elif [ "${{inputs.package-source}}" = "PyPI" ]; then
-            if [ -z "${{ inputs.package-version }}" ]; then
-                COMMAND="python -m pip install ${{ inputs.package-name }}"
-            else
-                COMMAND="python -m pip install ${{ inputs.package-name }}==${{ inputs.package-version }}"
-            fi
-            retry_command "$COMMAND" "${{ inputs.max-retries }}" "${{ inputs.retry-delay }}"
-
-        else
-            echo "Invalid package-source: '${{ inputs.package-source }}'."
-            exit 1
-        fi
-        echo "::endgroup::"
-        
-        echo "::group::Install Test-Suite"
-        python -m pip install ./${{ inputs.path-tests }}
-        echo "::endgroup::"
-
-    - name: 'Display info'
-      shell: bash
-      run: |
-        echo "::group::Python version"
-        python -c "import sys; print(sys.version)"
-        echo "::endgroup::"
-        echo "::group::pip list"
-        python -m pip list
-        echo "::endgroup::"
-        echo "::group::OS and hardware info"
-        uname -a
-        echo "::endgroup::"
-        echo "::group::Disk space usage"
-        df -h
-        echo "::endgroup::"
-        echo "::group::Available system resources"
-        ulimit -a
-        echo "::endgroup::"
-        echo "::group::Root directory"
-        ls -a
-        echo "::endgroup::"
-        echo "::group::File tree"
-        find .
-        echo "::endgroup::"
+        # Environment Setup
+        python "${{ github.action_path }}/env_setup.py"
 
 #    - name: 'Run dependency tests'
 #      shell: bash
 #      run: pipreqs ./src --debug --print
 
-    - name: 'Load PyTest Cache'
-      uses: actions/cache@v3
+    - name: 'PyTest Cache'
+      shell: bash
+      run: |
+        # PyTest Cache
+        am-print-h2 "PyTest Cache"
+    - uses: actions/cache@v3
       with:
         path: ${{ inputs.path-cache-pytest }}
         key: >-
@@ -200,8 +176,12 @@ runs:
           -${{ inputs.python-version }}
 #          -${{ fromJSON(inputs.config).checkout.ref_before }}
 
-    - name: 'Load Coverage Cache'
-      uses: actions/cache@v3
+    - name: 'Coverage Cache'
+      shell: bash
+      run: |
+        # Coverage Cache
+        am-print-h2 "Coverage Cache"
+    - uses: actions/cache@v3
       with:
         path: ${{ inputs.path-cache-coverage }}
         key: >-
@@ -210,9 +190,12 @@ runs:
           -${{ inputs.python-version }}
 #          -${{ fromJSON(inputs.config).checkout.ref_before }}
 
-    - name: 'Run Test-Suite'
+    - name: 'Test-Suite Run'
       shell: bash
-      run: python -m ${{ inputs.testsuite-import-name }}
+      run: |
+        # Test-Suite Run
+        am-print-h1 "Test-Suite Run"
+        python -m ${{ inputs.testsuite-import-name }}
 
     - name: 'Upload reports'
       if: always()
