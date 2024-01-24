@@ -71,7 +71,7 @@ def install_package(
                 "Error: {value.err}",
             ),
             case_return_accepted=(
-                "success",
+                "pass",
                 (
                     f"Installing package from {'TestPyPI' if source == 'testpypi' else 'PyPI'} "
                     f"was successful. {{value.summary}}"
@@ -83,7 +83,7 @@ def install_package(
                 f"{{value.summary}} Installation will be retried in {{next_sleep_seconds}} seconds."
             ),
             case_return_rejected_and_timeout=(
-                "error",
+                "fail",
                 f"Installing package from {'TestPyPI' if source == 'testpypi' else 'PyPI'} failed. "
                 f"{{value.summary}} The retry limit has been reached; action will fail."
             )
@@ -181,7 +181,7 @@ def submit_log_shell_output(
     )
     summary = f"{pre_summary}{shell_output.summary}"
     logger.entry(
-        status="success" if shell_output.success else "error",
+        status="pass" if shell_output.success else "fail",
         title=title,
         summary=summary,
         details=shell_output.details,
