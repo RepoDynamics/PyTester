@@ -167,7 +167,7 @@ runs:
       shell: bash
       run: |
         # PyTest Cache
-        am-print-h2 "PyTest Cache"
+        python "${{ github.action_path }}/heading.py" 2 "PyTest Cache"
     - uses: actions/cache@v3
       with:
         path: repo/${{ inputs.path-cache-pytest }}
@@ -181,7 +181,7 @@ runs:
       shell: bash
       run: |
         # Coverage Cache
-        am-print-h2 "Coverage Cache"
+        python "${{ github.action_path }}/heading.py" 2 "Coverage Cache"
     - uses: actions/cache@v3
       with:
         path: repo/${{ inputs.path-cache-coverage }}
@@ -195,11 +195,11 @@ runs:
       shell: bash
       run: |
         # Test-Suite
-        am-print-h1 "Test-Suite"
+        python "${{ github.action_path }}/heading.py" 1 "Test-Suite"
         cd repo
         python -m ${{ inputs.testsuite-import-name }}
-        am-print-h1 "Finalization"
-        am-print-h2 "Report Upload"
+        python "${{ github.action_path }}/heading.py" 1 "Finalization"
+        python "${{ github.action_path }}/heading.py" 2 "Report Upload"
 
     - name: 'Report Upload'
       if: ${{ !cancelled() }}
@@ -214,7 +214,7 @@ runs:
       shell: bash
       run: |
         # Coverage Upload
-        am-print-h2 "Coverage Upload"
+        python "${{ github.action_path }}/heading.py" 2 "Coverage Upload"
     - if: ${{ !cancelled() && inputs.package-source == 'PyPI' }}
       # https://github.com/marketplace/actions/codecov
       # https://github.com/codecov/codecov-action
