@@ -1,2 +1,4 @@
 actionman
 retryit
+pyshellman
+LoggerMan

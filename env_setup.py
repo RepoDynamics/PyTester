@@ -2,8 +2,11 @@ from typing import Callable, Literal
 import sys
 import traceback
 from pathlib import Path
+
 import actionman
 import retryit
+import pyshellman
+from loggerman import logger
 
 
 def setup_environment(
@@ -55,8 +58,8 @@ def install_package(
 ):
 
     def get_retry_func() -> Callable:
-        def return_handler(shell_output: actionman.shell.ShellOutput):
-            return not shell_output.success
+        def return_handler(shell_output: pyshellman.ShellOutput):
+            return not shell_output.succeeded
         retry_logger = retryit.logger.full(
             log_function=logger.entry,
             title=(
@@ -89,7 +92,7 @@ def install_package(
             )
         )
         return retryit.retry(
-            actionman.shell.pip_install_package,
+            pyshellman.pip.install_package,
             sleeper=retryit.sleeper.constant_until_max_duration(
                 sleep_seconds=retry_sleep_seconds, total_seconds=retry_sleep_seconds_total
             ),
@@ -100,7 +103,7 @@ def install_package(
 
     if source == "github":
         submit_log_shell_output(
-            shell_output=actionman.shell.pip_install(
+            shell_output=pyshellman.pip.install(
                 command=[path_setup_package],
                 cwd=path_repo,
             ),
@@ -112,7 +115,7 @@ def install_package(
         path_requirements = (path_repo / path_requirements_package).resolve()
         if path_requirements.is_file():
             submit_log_shell_output(
-                shell_output=actionman.shell.pip_install_requirements(
+                shell_output=pyshellman.pip.install_requirements(
                     path=path_requirements_package,
                     cwd=path_repo,
                 ),
@@ -160,7 +163,7 @@ def install_testsuite(
     path_setup_testsuite: str,
 ):
     submit_log_shell_output(
-        shell_output=actionman.shell.pip_install(
+        shell_output=pyshellman.pip.install(
             command=[path_setup_testsuite],
             cwd=path_repo,
         ),
@@ -171,22 +174,22 @@ def install_testsuite(
 
 
 def submit_log_shell_output(
-    shell_output: actionman.shell.ShellOutput,
+    shell_output: pyshellman.ShellOutput,
     title: str,
     prepend_summary: str = "",
 ):
     pre_summary = (
-        f"{prepend_summary} {'was successful' if shell_output.success else 'failed'}. "
+        f"{prepend_summary} {'was successful' if shell_output.succeeded else 'failed'}. "
         if prepend_summary else ""
     )
     summary = f"{pre_summary}{shell_output.summary}"
     logger.entry(
-        status="pass" if shell_output.success else "fail",
+        status="pass" if shell_output.succeeded else "fail",
         title=title,
         summary=summary,
         details=shell_output.details,
     )
-    if not shell_output.success:
+    if not shell_output.succeeded:
         sys.stdout.flush()
         sys.stderr.flush()
         sys.stdin.flush()
@@ -196,7 +199,11 @@ def submit_log_shell_output(
 
 if __name__ == "__main__":
     try:
-        logger = actionman.log.logger(initial_section_level=3)
+        # logger = actionman.log.logger(initial_section_level=3)
+        logger.initialize(
+            init_section_number=3,
+            github=True,
+        )
         logger.section("Package & Test-Suite Setup")
         inputs = actionman.io.read_function_args_from_environment_variables(
             function=setup_environment,
@@ -214,22 +221,22 @@ if __name__ == "__main__":
         logger.entry(
             status="info",
             title="Installed Packages",
-            summary=actionman.shell.pip_list().out,
+            summary=pyshellman.pip.list().output,
         )
         logger.entry(
             status="info",
             title="Hardware and OS Info",
-            summary=actionman.shell.run(["uname", "-a"]).out,
+            summary=pyshellman.run(["uname", "-a"]).output,
         )
         logger.entry(
             status="info",
             title="System Resources",
-            summary=actionman.shell.run(["ulimit", "-a"]).out,
+            summary=pyshellman.run(["ulimit", "-a"]).output,
         )
         logger.entry(
             status="info",
             title="Disk Space",
-            summary=actionman.shell.run(["df", "-h"]).out,
+            summary=pyshellman.run(["df", "-h"]).output,
         )
     except Exception as e:
         sys.stdout.flush()
