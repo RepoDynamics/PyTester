@@ -9,6 +9,7 @@ import pyshellman
 from loggerman import logger
 
 
+@logger.sectioner("Installation")
 def setup_environment(
     path_repo: str,
     path_setup_testsuite: str,
@@ -20,7 +21,6 @@ def setup_environment(
     retry_sleep_seconds: int,
     retry_sleep_seconds_total: int,
 ):
-    logger.section("Installation")
     source = package_source.lower()
     if source not in ("github", "pypi", "testpypi"):
         sys.exit(
@@ -42,7 +42,6 @@ def setup_environment(
         path_repo=path_repo,
         path_setup_testsuite=path_setup_testsuite,
     )
-    logger.section_end()
     return
 
 
@@ -61,7 +60,7 @@ def install_package(
         def return_handler(shell_output: pyshellman.ShellOutput):
             return not shell_output.succeeded
         retry_logger = retryit.logger.full(
-            log_function=logger.entry,
+            log_function=logger.log,
             title=(
                 f"Install Package From {'TestPyPI' if source == 'testpypi' else 'PyPI'} "
                 f"(attempt {{count_tries}})"
@@ -123,11 +122,10 @@ def install_package(
                 prepend_summary="Installing package requirements",
             )
         else:
-            logger.entry(
-                status="skip",
+            logger.info(
                 title="Install Package Requirements",
-                summary="No requirements file found.",
-                details=[
+                msg="No requirements file found.",
+                code=[
                     f"Input Path: {path_requirements_package}",
                     f"Resolved Path: {path_requirements}",
                 ],
@@ -183,11 +181,11 @@ def submit_log_shell_output(
         if prepend_summary else ""
     )
     summary = f"{pre_summary}{shell_output.summary}"
-    logger.entry(
-        status="pass" if shell_output.succeeded else "fail",
+    logger.log(
+        level="info" if shell_output.succeeded else "erorr",
         title=title,
-        summary=summary,
-        details=shell_output.details,
+        msg=summary,
+        code=shell_output.details,
     )
     if not shell_output.succeeded:
         sys.stdout.flush()
@@ -214,30 +212,25 @@ if __name__ == "__main__":
         setup_environment(**inputs)
         logger.section_end()
         logger.section("Environment Info")
-        logger.entry(
-            status="info",
+        logger.info(
             title="Python Version",
-            details=[f"Python version: {sys.version}"],
+            msg=[f"Python version: {sys.version}"],
         )
-        logger.entry(
-            status="info",
+        logger.info(
             title="Installed Packages",
-            summary=pyshellman.pip.list().output,
+            msg=pyshellman.pip.list().output,
         )
-        logger.entry(
-            status="info",
+        logger.info(
             title="Hardware and OS Info",
-            summary=pyshellman.run(["uname", "-a"]).output,
+            msg=pyshellman.run(["uname", "-a"]).output,
         )
-        logger.entry(
-            status="info",
+        logger.info(
             title="System Resources",
-            summary=pyshellman.run(["ulimit", "-a"]).output,
+            msg=pyshellman.run(["ulimit", "-a"]).output,
         )
-        logger.entry(
-            status="info",
+        logger.info(
             title="Disk Space",
-            summary=pyshellman.run(["df", "-h"]).output,
+            msg=pyshellman.run(["df", "-h"]).output,
         )
     except Exception as e:
         sys.stdout.flush()
