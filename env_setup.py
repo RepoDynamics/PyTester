@@ -1,4 +1,4 @@
-from typing import Callable, Literal
+from typing import Callable, Literal, get_type_hints
 import sys
 import traceback
 from pathlib import Path
@@ -205,11 +205,12 @@ if __name__ == "__main__":
             github=True,
         )
         logger.section("Package & Test-Suite Setup")
-        inputs = actionman.io.read_function_args_from_environment_variables(
-            function=setup_environment,
-            name_prefix="RD_PYTESTER_ES__",
-            logger=logger,
-        )
+        params = get_type_hints(setup_environment)
+        inputs = {
+            param_name: actionman.environment_variable.read(
+                name=f"RD_PYTESTER_ES__{param_name.upper()}", typ=param_type
+            ) for param_name, param_type in params.items()
+        }
         setup_environment(**inputs)
         logger.section_end()
         logger.section("Environment Info")
