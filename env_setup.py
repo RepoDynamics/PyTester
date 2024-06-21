@@ -211,7 +211,7 @@ if __name__ == "__main__":
         }
         setup_environment(**inputs)
         logger.section_end()
-        logger.section("Environment Info")
+        logger.section("Environment Info", group=True)
         logger.info(
             title="Python Version",
             msg=[f"Python version: {sys.version}"],
@@ -224,14 +224,14 @@ if __name__ == "__main__":
             title="Hardware and OS Info",
             msg=pyshellman.run(["uname", "-a"]).output,
         )
-        logger.info(
-            title="System Resources",
-            msg=pyshellman.run(["ulimit", "-a"]).output,
-        )
-        logger.info(
-            title="Disk Space",
-            msg=pyshellman.run(["df", "-h"]).output,
-        )
+        # logger.info(
+        #     title="System Resources",
+        #     msg=pyshellman.run(["ulimit", "-a"]).output,
+        # )
+        # logger.info(
+        #     title="Disk Space",
+        #     msg=pyshellman.run(["df", "-h"]).output,
+        # )
     except Exception as e:
         sys.stdout.flush()
         sys.exit(f"{e.__class__.__name__}: {e}\n{traceback.format_exc()}")
