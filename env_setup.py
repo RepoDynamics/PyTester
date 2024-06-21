@@ -17,8 +17,8 @@ def setup_environment(
     package_name: str,
     package_version: str,
     path_requirements_package: str,
-    retry_sleep_seconds: float,
-    retry_sleep_seconds_total: float,
+    retry_sleep_seconds: int,
+    retry_sleep_seconds_total: int,
 ):
     logger.section("Installation")
     source = package_source.lower()
