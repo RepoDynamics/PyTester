@@ -5,26 +5,21 @@ branding:
   icon: file-text
   color: blue
 
-
 inputs:
-
   repository:
     description: Full name of the repository, i.e., 'owner-username/repo-name'.
     required: false
     default: ${{ github.repository }}
-
   ref:
     description: Git reference to check out in the repository.
     required: false
     default: ${{ github.ref }}
-
   path-setup-testsuite:
     description: >-
       Path (relative to the repository root) to the directory containing 
       the test-suite's setup file (e.g., pyproject.toml).
     required: false
     default: ./tests
-
   path-setup-package:
     description: >-
       Path (relative to the repository root) to the directory containing 
@@ -32,38 +27,31 @@ inputs:
       This is only used when `package-source` is set to 'GitHub'.
     required: false
     default: .
-
   testsuite-import-name:
     description: Name of the testsuite package to import.
     required: true
-
   package-source:
     description: Source to install the package; either 'GitHub', 'TestPyPI', or 'PyPI'.
     required: false
     default: local
-
   package-name:
     description: Name of the package to install, when `package-source` is 'PyPI' or 'TestPyPI'.
     required: false
     default: ""
-
   package-version:
     description: |
       Version of the package to download and install, when `package-source` is 'PyPI' or 'TestPyPI'.
       If not specified, the latest version will be installed.
     required: false
     default: ""
-
   python-version:
     description: Python version to use.
     required: false
     default: '3.x'
-
   os:
     description: Current operating system of the job.
     required: false
     default: ubuntu-latest
-
   path-requirements-package:
     description: |
       Path (relative to the repository root) to the requirements.txt file for the package.
@@ -72,43 +60,34 @@ inputs:
       installed from the requirements.txt file to avoid security vulnerabilities and other issues.
     required: false
     default: "requirements.txt"
-
   path-report-pytest:
     description: Path to the pytest reports directory relative to the repository root.
     required: false
     default: ""
-
   path-report-coverage:
     description: Path to the coverage reports directory relative to the repository root.
     required: false
     default: ""
-
   path-cache-pytest:
     description: Path to the pytest cache directory relative to the repository root.
     required: false
     default: ""
-
   path-cache-coverage:
     description: Path to the coverage cache directory relative to the repository root.
     required: false
     default: ""
-
   retry-sleep-seconds-total:
     description: Maximum number of retries for downloading the package from PyPI or TestPyPI.
     required: false
     default: '900'
-
   retry-sleep-seconds:
     description: Delay between retries in seconds.
     required: false
     default: '30'
 
-
 runs:
-
   using: "composite"
   steps:
-
     - name: 'Initialization'
       shell: bash
       run: |
@@ -117,25 +96,21 @@ runs:
         printf "\n\n$(cat $LOGO_PATH)\n"
         python "${{ github.action_path }}/heading.py" 1 "Initialization"
         python "${{ github.action_path }}/heading.py" 2 "Repository Checkout"
-
     - name: 'Repository Checkout'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4  # https://github.com/actions/checkout
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.ref }}
         fetch-tags: true
         path: repo
-#        fetch-depth: 0
-
     - name: 'Python Setup'
       shell: bash
       run: |
         # Python Setup
         python "${{ github.action_path }}/heading.py" 2 "Python Setup"
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v5  # https://github.com/actions/setup-python
       with:
         python-version: ${{ inputs.python-version }}
-
     - name: 'Environment Setup'
       env:
         RD_PYTESTER_ES__PATH_REPO: repo
@@ -158,17 +133,15 @@ runs:
         python -m pip install -r "${{ github.action_path }}/requirements.txt"
         echo "::endgroup::"
         python "${{ github.action_path }}/env_setup.py"
-
 #    - name: 'Run dependency tests'
 #      shell: bash
 #      run: pipreqs ./src --debug --print
-
     - name: 'PyTest Cache'
       shell: bash
       run: |
         # PyTest Cache
         python "${{ github.action_path }}/heading.py" 2 "PyTest Cache"
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: repo/${{ inputs.path-cache-pytest }}
         key: >-
@@ -176,13 +149,12 @@ runs:
           -${{ inputs.os }}
           -${{ inputs.python-version }}
 #          -${{ fromJSON(inputs.config).checkout.ref_before }}
-
     - name: 'Coverage Cache'
       shell: bash
       run: |
         # Coverage Cache
         python "${{ github.action_path }}/heading.py" 2 "Coverage Cache"
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: repo/${{ inputs.path-cache-coverage }}
         key: >-
@@ -190,9 +162,10 @@ runs:
           -${{ inputs.os }}
           -${{ inputs.python-version }}
 #          -${{ fromJSON(inputs.config).checkout.ref_before }}
-
     - name: 'Test-Suite'
       shell: bash
+      env:
+        CI: true
       run: |
         # Test-Suite
         python "${{ github.action_path }}/heading.py" 1 "Test-Suite"
@@ -200,15 +173,12 @@ runs:
         python -m ${{ inputs.testsuite-import-name }}
         python "${{ github.action_path }}/heading.py" 1 "Finalization"
         python "${{ github.action_path }}/heading.py" 2 "Report Upload"
-
     - name: 'Report Upload'
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Test-Suite Reports
         path: repo/${{ inputs.path-report-pytest }}
-
-
     - name: 'Coverage Upload'
       if: ${{ !cancelled() && inputs.package-source == 'PyPI' }}
       shell: bash
