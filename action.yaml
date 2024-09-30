@@ -88,8 +88,7 @@ runs:
       shell: bash
       run: |
         # Initialization
-        LOGO_PATH=$(echo "${{github.action_path}}/docs/media/logo/full.txt" | sed -e 's/\\/\//g' -e 's/://')
-        printf "\n\n$(cat $LOGO_PATH)\n"
+        printf "\n$(cat ${{github.action_path}}/docs/media/logo/full.txt)\n\n"
         python "${{ github.action_path }}/action/script/log.py" "1. Initialization"
         python "${{ github.action_path }}/action/script/log.py" "1.1. Repository Checkout"
 
