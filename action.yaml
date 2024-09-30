@@ -1,4 +1,4 @@
-name: 'RepoDynamics PyTests'
+name: 'RepoDynamics PyTester'
 description: 'Test Python packages'
 author: 'Armin Ariamajd'
 branding:
@@ -14,33 +14,33 @@ inputs:
     description: Git reference to check out in the repository.
     required: false
     default: ${{ github.ref }}
-  path-setup-testsuite:
+  tests-path:
     description: >-
       Path (relative to the repository root) to the directory containing 
       the test-suite's setup file (e.g., pyproject.toml).
     required: false
-    default: ./tests
-  path-setup-package:
+    default: tests
+  pkg-path:
     description: >-
       Path (relative to the repository root) to the directory containing 
       the package's setup file (e.g., pyproject.toml).
       This is only used when `package-source` is set to 'GitHub'.
     required: false
-    default: .
-  testsuite-import-name:
+    default: pkg
+  tests-name:
     description: Name of the testsuite package to import.
     required: true
-  package-source:
-    description: Source to install the package; either 'GitHub', 'TestPyPI', or 'PyPI'.
+  pkg-src:
+    description: Source to install the package; either 'GitHub', 'TestPyPI', or 'PyPI' (case-insensitive).
     required: false
-    default: local
-  package-name:
-    description: Name of the package to install, when `package-source` is 'PyPI' or 'TestPyPI'.
+    default: github
+  pkg-name:
+    description: Name of the package to install, when `pkg-src` is 'PyPI' or 'TestPyPI'.
     required: false
     default: ""
-  package-version:
+  pkg-version:
     description: |
-      Version of the package to download and install, when `package-source` is 'PyPI' or 'TestPyPI'.
+      Version of the package to download and install, when `pkg-src` is 'PyPI' or 'TestPyPI'.
       If not specified, the latest version will be installed.
     required: false
     default: ""
@@ -48,34 +48,30 @@ inputs:
     description: Python version to use.
     required: false
     default: '3.x'
-  os:
-    description: Current operating system of the job.
-    required: false
-    default: ubuntu-latest
-  path-requirements-package:
+  pkg-req-path:
     description: |
       Path (relative to the repository root) to the requirements.txt file for the package.
-      This is only used when `package-source` is 'TestPyPI', in which case the package will
+      This is only used when `pkg-src` is 'TestPyPI', in which case the package will
       be installed without its dependencies from TestPyPI, and the dependencies will be
       installed from the requirements.txt file to avoid security vulnerabilities and other issues.
     required: false
-    default: "requirements.txt"
-  path-report-pytest:
-    description: Path to the pytest reports directory relative to the repository root.
-    required: false
-    default: ""
-  path-report-coverage:
-    description: Path to the coverage reports directory relative to the repository root.
-    required: false
-    default: ""
-  path-cache-pytest:
-    description: Path to the pytest cache directory relative to the repository root.
-    required: false
-    default: ""
-  path-cache-coverage:
-    description: Path to the coverage cache directory relative to the repository root.
-    required: false
-    default: ""
+    default: pkg/requirements.txt
+#  path-report-pytest:
+#    description: Path to the pytest reports directory relative to the repository root.
+#    required: false
+#    default: ""
+#  path-report-coverage:
+#    description: Path to the coverage reports directory relative to the repository root.
+#    required: false
+#    default: ""
+#  path-cache-pytest:
+#    description: Path to the pytest cache directory relative to the repository root.
+#    required: false
+#    default: ""
+#  path-cache-coverage:
+#    description: Path to the coverage cache directory relative to the repository root.
+#    required: false
+#    default: ""
   retry-sleep-seconds-total:
     description: Maximum number of retries for downloading the package from PyPI or TestPyPI.
     required: false
@@ -86,56 +82,60 @@ inputs:
     default: '30'
 
 runs:
-  using: "composite"
+  using: composite
   steps:
-    - name: 'Initialization'
+    - name: Initialization
       shell: bash
       run: |
         # Initialization
-        LOGO_PATH=$(echo "${{github.action_path}}/logo.txt" | sed -e 's/\\/\//g' -e 's/://')
+        LOGO_PATH=$(echo "${{github.action_path}}/docs/media/logo/full.txt" | sed -e 's/\\/\//g' -e 's/://')
         printf "\n\n$(cat $LOGO_PATH)\n"
-        python "${{ github.action_path }}/heading.py" 1 "Initialization"
-        python "${{ github.action_path }}/heading.py" 2 "Repository Checkout"
-    - name: 'Repository Checkout'
+        python "${{ github.action_path }}/action/script/log.py" "1. Initialization"
+        python "${{ github.action_path }}/action/script/log.py" "1.1. Repository Checkout"
+
+    
+    
+
+    - name: Repository Checkout
       uses: actions/checkout@v4  # https://github.com/actions/checkout
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.ref }}
         fetch-tags: true
         path: repo
-    - name: 'Python Setup'
+
+    - name: Python Setup
       shell: bash
       run: |
         # Python Setup
-        python "${{ github.action_path }}/heading.py" 2 "Python Setup"
+        python "${{ github.action_path }}/action/script/log.py" "1.2. Python Setup"
     - uses: actions/setup-python@v5  # https://github.com/actions/setup-python
       with:
         python-version: ${{ inputs.python-version }}
-    - name: 'Environment Setup'
+
+    - name: Environment Setup
       env:
-        RD_PYTESTER_ES__PATH_REPO: repo
-        RD_PYTESTER_ES__PATH_SETUP_TESTSUITE: ${{ inputs.path-setup-testsuite }}
-        RD_PYTESTER_ES__PATH_SETUP_PACKAGE: ${{ inputs.path-setup-package }}
-        RD_PYTESTER_ES__PACKAGE_SOURCE: ${{ inputs.package-source }}
-        RD_PYTESTER_ES__PACKAGE_NAME: ${{ inputs.package-name }}
-        RD_PYTESTER_ES__PACKAGE_VERSION: ${{ inputs.package-version }}
-        RD_PYTESTER_ES__PATH_REQUIREMENTS_PACKAGE: ${{ inputs.path-requirements-package }}
-        RD_PYTESTER_ES__RETRY_SLEEP_SECONDS: ${{ inputs.retry-sleep-seconds }}
-        RD_PYTESTER_ES__RETRY_SLEEP_SECONDS_TOTAL: ${{ inputs.retry-sleep-seconds-total }}
+        RD_PYTESTER__REPO_PATH: repo
+        RD_PYTESTER__TESTS_PATH: ${{ inputs.tests-path }}
+        RD_PYTESTER__PKG_PATH: ${{ inputs.pkg-path }}
+        RD_PYTESTER__PKG_SRC: ${{ inputs.pkg-src }}
+        RD_PYTESTER__PKG_NAME: ${{ inputs.pkg-name }}
+        RD_PYTESTER__PKG_VERSION: ${{ inputs.pkg-version }}
+        RD_PYTESTER__PKG_REQ_PATH: ${{ inputs.pkg-req-path }}
+        RD_PYTESTER__RETRY_SLEEP_SECONDS: ${{ inputs.retry-sleep-seconds }}
+        RD_PYTESTER__RETRY_SLEEP_SECONDS_TOTAL: ${{ inputs.retry-sleep-seconds-total }}
       shell: bash
       run: |
         # Environment Setup
-        python "${{ github.action_path }}/heading.py" 2 "Environment Setup"
-        echo "::group::Upgrade pip"
+        python "${{ github.action_path }}/action/script/log.py" "1.3. Environment Setup"
+        echo "::group::Upgrade Pip"
         python -m pip install --upgrade pip
         echo "::endgroup::"
         echo "::group::Install Action Requirements"
         python -m pip install -r "${{ github.action_path }}/requirements.txt"
         echo "::endgroup::"
         python "${{ github.action_path }}/env_setup.py"
-#    - name: 'Run dependency tests'
-#      shell: bash
-#      run: pipreqs ./src --debug --print
+
     - name: 'PyTest Cache'
       shell: bash
       run: |
@@ -149,6 +149,7 @@ runs:
           -${{ inputs.os }}
           -${{ inputs.python-version }}
 #          -${{ fromJSON(inputs.config).checkout.ref_before }}
+
     - name: 'Coverage Cache'
       shell: bash
       run: |
@@ -162,6 +163,7 @@ runs:
           -${{ inputs.os }}
           -${{ inputs.python-version }}
 #          -${{ fromJSON(inputs.config).checkout.ref_before }}
+
     - name: 'Test-Suite'
       shell: bash
       env:
@@ -170,22 +172,24 @@ runs:
         # Test-Suite
         python "${{ github.action_path }}/heading.py" 1 "Test-Suite"
         cd repo
-        python -m ${{ inputs.testsuite-import-name }}
+        python -m ${{ inputs.tests-name }}
         python "${{ github.action_path }}/heading.py" 1 "Finalization"
         python "${{ github.action_path }}/heading.py" 2 "Report Upload"
+
     - name: 'Report Upload'
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: Test-Suite Reports
         path: repo/${{ inputs.path-report-pytest }}
+
     - name: 'Coverage Upload'
-      if: ${{ !cancelled() && inputs.package-source == 'PyPI' }}
+      if: ${{ !cancelled() && inputs.pkg-src == 'PyPI' }}
       shell: bash
       run: |
         # Coverage Upload
         python "${{ github.action_path }}/heading.py" 2 "Coverage Upload"
-    - if: ${{ !cancelled() && inputs.package-source == 'PyPI' }}
+    - if: ${{ !cancelled() && inputs.pkg-src == 'PyPI' }}
       # https://github.com/marketplace/actions/codecov
       # https://github.com/codecov/codecov-action
       env:

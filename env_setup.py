@@ -205,7 +205,7 @@ if __name__ == "__main__":
         logger.section("Package & Test-Suite Setup")
         params = get_type_hints(setup_environment)
         inputs = {
-            param_name: actionman.environment_variable.read(
+            param_name: actionman.env_var.read(
                 name=f"RD_PYTESTER_ES__{param_name.upper()}", typ=param_type
             ) for param_name, param_type in params.items()
         }
