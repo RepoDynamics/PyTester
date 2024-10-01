@@ -11,7 +11,7 @@ def main():
         ("overrides", dict),
     ):
         env_var_value = os.environ.get(f"RD_PYTESTER__{env_var_name.upper()}")
-        if env_var_value is None:
+        if not env_var_value:
             parsed_args[env_var_name] = None
             continue
         try:
