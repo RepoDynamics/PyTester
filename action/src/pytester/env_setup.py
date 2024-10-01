@@ -36,7 +36,7 @@ class EnvSetup:
             log_title="Virtual Environment Setup",
         )
         venv_python_path = venv_executable_path(venv_path, "python")
-        actionman.step_output.write(f"venv-python-path", str(venv_python_path))
+        actionman.step_output.write(f"venv-python-path", venv_python_path.as_posix())
         self._pip_runner = pyshellman.Runner(
             pre_command=[str(venv_python_path), "-m", "pip"],
             logger=logger,
