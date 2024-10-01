@@ -204,9 +204,10 @@ runs:
         CI: true
       shell: bash
       run: |
+        # Test Suite Execution
         python "${{ github.action_path }}/action/script/log.py" "2. Test Suite Execution"
         
-        ${{ steps.env-setup.outputs.venv-python-path }} -m "${{ github.action_path }}/action/script/test_run.py"
+        ${{ steps.env-setup.outputs.venv-python-path }} "${{ github.action_path }}/action/script/test_run.py"
         
         python "${{ github.action_path }}/action/script/log.py" "3. Finalization"
         python "${{ github.action_path }}/action/script/log.py" "3.1. Report Upload"
