@@ -26,8 +26,8 @@ class EnvSetup:
 
     def __init__(
         self,
-        python_path: Path,
-        repo_path: Path,
+        python_path: str | Path,
+        repo_path: str | Path,
     ):
         venv_path = Path(".venv")
         pyshellman.run(
@@ -41,7 +41,7 @@ class EnvSetup:
             pre_command=[str(venv_python_path), "-m", "pip"],
             logger=logger,
         )
-        self._repo_path = repo_path
+        self._repo_path = Path(repo_path)
         return
 
     def install_package(
