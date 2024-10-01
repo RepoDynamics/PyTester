@@ -1,0 +1,35 @@
+
+[build-system]
+requires = ["setuptools>=61.0", "versioningit"]
+build-backend = "setuptools.build_meta"
+
+
+# ----------------------------------------- setuptools -------------------------------------------
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+
+# ----------------------------------------- Project Metadata -------------------------------------
+#
+[project]
+version = "0.0.0.dev1"
+name = "PyTester"
+dependencies = [
+    "ActionMan == 0.0.0.dev24",
+    "PyShellMan == 0.0.0.dev7",
+    "MDit == 0.0.0.dev18",
+    "LoggerMan == 0.0.0.dev47",
+]
+requires-python = ">=3.10"
+
+
+#[project.scripts]
+#rd-print = "repodynamics.actions._print:main"
+#repodynamics-get-metadata = "pypackit.metadata:__main__"
+#repodynamics-sync-files = "pypackit.templates:__main__"
+#repodynamics-deploy = "pypackit.cd:__main__"

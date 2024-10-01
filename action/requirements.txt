@@ -1,4 +1,4 @@
-actionman
-retryit
-pyshellman
-LoggerMan
+ActionMan == 0.0.0.dev24
+PyShellMan == 0.0.0.dev7
+MDit == 0.0.0.dev18
+LoggerMan == 0.0.0.dev47
