@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import io
 
 
 LEN_CONSOLE_LINE = 88
@@ -42,6 +43,14 @@ def _apply_style(text: str, color: tuple[int, int, int], bold: bool = False):
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, 'buffer'):
+        # Wrap the standard output stream to change its encoding to UTF-8,
+        # which is required for writing unicode characters (e.g., emojis) to the console in Windows.
+        # However, this works in standard Python environments where sys.stdout is a regular file object;
+        # in environments like Jupyter, sys.stdout is already set up to handle Unicode,
+        # and does not need to be (and cannot be) wrapped in this way.
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
     # Check if the necessary arguments are provided
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} 'X.Y.Z Title'")
