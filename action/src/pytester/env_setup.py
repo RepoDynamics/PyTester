@@ -151,7 +151,7 @@ def main():
     setup_environment = EnvSetup(**init_args)
     setup_environment.install_package(
         retries=actionman.env_var.read(f"{ENV_PREFIX}RETRIES", int),
-        retry_sleep_seconds=actionman.env_var.read(f"{ENV_PREFIX}RETRY_SLEEP_SECONDS", float),
+        retry_sleep_seconds=actionman.env_var.read(f"{ENV_PREFIX}RETRY_SLEEP_SECONDS", int),
         **pkg_args
     )
     setup_environment.install_testsuite(
