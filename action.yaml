@@ -154,11 +154,11 @@ runs:
         cache-dependency-path: requirements.txt
 
     - name: Environment Setup
+      id: env-setup
       env:
         RD_PYTESTER__PYTHON_PATH: ${{ steps.py-setup.outputs.python-path }}
         RD_PYTESTER__REPO_PATH: repo
         RD_PYTESTER__TESTS_PATH: ${{ inputs.tests-path }}
-        RD_PYTESTER__TESTS_NAME: ${{ inputs.tests-name }}
         RD_PYTESTER__PKG_SRC: ${{ inputs.pkg-src }}
         RD_PYTESTER__PKG_PATH: ${{ inputs.pkg-path }}
         RD_PYTESTER__PKG_NAME: ${{ inputs.pkg-name }}
@@ -166,10 +166,6 @@ runs:
         RD_PYTESTER__PKG_REQ_PATH: ${{ inputs.pkg-req-path }}
         RD_PYTESTER__RETRIES: ${{ inputs.retries }}
         RD_PYTESTER__RETRY_SLEEP_SECONDS: ${{ inputs.retry-sleep-seconds }}
-        RD_PYTESTER__PYARGS: ${{ inputs.pyargs }}
-        RD_PYTESTER__ARGS: ${{ inputs.args }}
-        RD_PYTESTER__OVERRIDES: ${{ inputs.overrides }}
-        CI: true
       shell: bash
       run: |
         # Environment Setup
@@ -198,10 +194,19 @@ runs:
         echo "::endgroup::"
         
         python "${{ github.action_path }}/action/src/pytester/env_setup.py"
-        
+
+    - name: Test Suite Execution
+      env:
+        RD_PYTESTER__TESTS_NAME: ${{ inputs.tests-name }}
+        RD_PYTESTER__PYARGS: ${{ inputs.pyargs }}
+        RD_PYTESTER__ARGS: ${{ inputs.args }}
+        RD_PYTESTER__OVERRIDES: ${{ inputs.overrides }}
+        CI: true
+      shell: bash
+      run: |
         python "${{ github.action_path }}/action/script/log.py" "2. Test Suite Execution"
         
-        $RD_PYTESTER__VENV_PYTHON_PATH -m "${{ github.action_path }}/action/script/test_run.py"
+        ${{ steps.env-setup.outputs.venv-python-path }} -m "${{ github.action_path }}/action/script/test_run.py"
         
         python "${{ github.action_path }}/action/script/log.py" "3. Finalization"
         python "${{ github.action_path }}/action/script/log.py" "3.1. Report Upload"
