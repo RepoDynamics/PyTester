@@ -17,11 +17,11 @@ namespaces = true
 # ----------------------------------------- Project Metadata -------------------------------------
 #
 [project]
-version = "0.0.0.dev1"
+version = "0.0.0.dev2"
 name = "PyTester"
 dependencies = [
     "ActionMan == 0.0.0.dev24",
-    "PyShellMan == 0.0.0.dev7",
+    "PyShellMan == 0.0.0.dev8",
     "MDit == 0.0.0.dev18",
     "LoggerMan == 0.0.0.dev47",
 ]
