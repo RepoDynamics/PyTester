@@ -31,7 +31,7 @@ class EnvSetup:
     ):
         venv_path = Path(".venv")
         pyshellman.run(
-            command=[str(python_path), "-m", "venv", str(venv_path)],
+            command=[str(python_path), "-m", "venv", str(venv_path), "--upgrade-deps"],
             logger=logger,
             log_title="Virtual Environment Setup",
         )
