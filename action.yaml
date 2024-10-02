@@ -232,7 +232,7 @@ runs:
       shell: bash
       run: |
         # Coverage Upload
-        python "${{ github.action_path }}/heading.py" 2 "Coverage Upload"
+        python "${{ github.action_path }}/action/script/log.py" "3.2. Coverage Upload"
     - if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}
       # https://github.com/marketplace/actions/codecov
       # https://github.com/codecov/codecov-action
