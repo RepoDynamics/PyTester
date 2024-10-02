@@ -110,6 +110,14 @@ inputs:
     description: Name of the artifact to upload.
     required: false
     default: Test-Suite Report
+  upload-codecov:
+    description: Whether to upload the coverage report to Codecov.
+    required: false
+    default: 'true'
+  codecov-yml-path:
+    description: Path to the Codecov configuration file relative to the repository root.
+    required: false
+    default: .github/.codecov.yml
 
 runs:
   using: composite
@@ -219,21 +227,24 @@ runs:
         name: ${{ inputs.report-artifact-name }}
         path: report
 
-    - name: 'Coverage Upload'
+    - name: Coverage Upload
       if: ${{ !cancelled() && inputs.pkg-src == 'PyPI' }}
       shell: bash
       run: |
         # Coverage Upload
         python "${{ github.action_path }}/heading.py" 2 "Coverage Upload"
-    - if: ${{ !cancelled() && inputs.pkg-src == 'PyPI' }}
+    - if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}
       # https://github.com/marketplace/actions/codecov
       # https://github.com/codecov/codecov-action
       env:
-        OS: ${{ inputs.os }}
+        OS: ${{ runner.os }}
         PYTHON: ${{ inputs.python-version }}
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
-        directory: repo/${{ inputs.path-report-coverage }}
-        fail_ci_if_error: false
-        verbose: true
+        codecov_yml_path: repo/${{ inputs.codecov-yml-path }}
+        directory: report
         env_vars: OS,PYTHON
+        fail_ci_if_error: false
+        root_dir: repo
+        use_oidc: true  # https://github.com/codecov/codecov-action/issues/1489#issuecomment-2197308411
+        verbose: true
