@@ -228,7 +228,7 @@ runs:
         path: report
 
     - name: Coverage Upload
-      if: ${{ !cancelled() && inputs.pkg-src == 'PyPI' }}
+      if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}
       shell: bash
       run: |
         # Coverage Upload
@@ -241,6 +241,7 @@ runs:
         PYTHON: ${{ inputs.python-version }}
       uses: codecov/codecov-action@v4
       with:
+        # TODO: Check that env_vars are correctly set. (https://github.com/codecov/codecov-action/pull/64)
         codecov_yml_path: repo/${{ inputs.codecov-yml-path }}
         directory: report
         env_vars: OS,PYTHON
