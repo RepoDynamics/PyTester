@@ -1,4 +1,4 @@
 ActionMan == 0.0.0.dev24
-PyShellMan == 0.0.0.dev12
-MDit == 0.0.0.dev22
-LoggerMan == 0.0.0.dev51
+PyShellMan == 0.0.0.dev13
+MDit == 0.0.0.dev23
+LoggerMan == 0.0.0.dev52
