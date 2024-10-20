@@ -17,12 +17,12 @@ namespaces = true
 # ----------------------------------------- Project Metadata -------------------------------------
 #
 [project]
-version = "0.0.0.dev10"
+version = "0.0.0.dev11"
 name = "PyTester"
 dependencies = [
     "ActionMan == 0.0.0.dev24",
-    "PyShellMan == 0.0.0.dev16",
-    "MDit == 0.0.0.dev26",
-    "LoggerMan == 0.0.0.dev55",
+    "PyShellMan == 0.0.0.dev17",
+    "MDit == 0.0.0.dev27",
+    "LoggerMan == 0.0.0.dev56",
 ]
 requires-python = ">=3.10"
